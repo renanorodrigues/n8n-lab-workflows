@@ -1,0 +1,372 @@
+{
+  "name": "Registro de ideias",
+  "nodes": [
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:9000/v1/audio/transcriptions",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "file",
+              "inputDataFieldName": "data"
+            },
+            {
+              "name": "language",
+              "value": "pt"
+            },
+            {
+              "name": "prompt",
+              "value": "Transcreva áudios para o idioma português brasileiro"
+            },
+            {
+              "name": "model",
+              "value": "small"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        704,
+        -208
+      ],
+      "id": "b3db1e24-bbd0-4608-8d4c-5a5a67f28d9e",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Pega todos os itens que entraram no nó\nconst items = $input.all();\n\n// Passa por cada item da lista e faz o processamento\nreturn items.map(item => {\n  // Pega o texto da propriedade 'output' do item atual\n  const raw = item.json.output;\n\n  if (!raw) {\n    return {\n      json: { name: 'Sem Nome', body: 'Conteúdo vazio' }\n    };\n  }\n\n  // Remove cercas de markdown tipo ```json ... ```\n  let cleaned = raw.trim()\n    .replace(/^```json\\s*/i, '')\n    .replace(/^```\\s*/i, '')\n    .replace(/```$/i, '')\n    .replace(/^\\uFEFF/, ''); // Remove BOM se existir\n\n  let parsedData;\n  try {\n    parsedData = JSON.parse(cleaned);\n  } catch (e) {\n    // Se um JSON falhar, ele avisa qual falhou sem derrubar todo o fluxo\n    parsedData = {\n      name: \"Erro de processamento\",\n      body: \"Não consegui fazer o parse deste item. Conteúdo original:\\n\" + cleaned\n    };\n  }\n\n  // Retorna o formato correto exigido pelo n8n para cada item\n  return {\n    json: {\n      name: parsedData.name || 'Sem nome',\n      body: parsedData.body || 'Sem conteúdo'\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1344,
+        -208
+      ],
+      "id": "151764a2-bb51-4d3a-93c0-cd017586d705",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Você é um assistente que analisa gravações de voz em português do Brasil.\nSua tarefa é **extrair o seguinte dado** do texto {{ $json.text }}:\n\n{\n  \"name\": \"\",\n  \"body\": \"\"\n}\n\nRegras:\n- \"name\": descreva em poucas palavras a mensagem central mencionada no texto (ex: \"almoço na padaria\", \"uber para o trabalho\", \"remédio na farmácia\").\n- \"body\": é todo o texto analisado anteriormente sem quaisquer modificações.\n\nExemplo de entrada:\n\"Tive uma ideia de projeto para poder integrar o n8n com áudios de voz advindos do bot do Telegram e assim automatizar minhas tarefas\"\n\nSaída:\n{\n  \"name\": \"Projeto de automatização de áudios via n8n\",\n  \"body\": \"Tive uma ideia de projeto para poder integrar o n8n com áudios de voz advindos do bot do Telegram e assim automatizar minhas tarefas\"\n}\n  \nImportante:\n- Sempre responda **somente JSON válido**, sem texto extra, explicações ou comentários. \n- Não adicione \"```json\" no inicio comece direto em \"{\",  .\n",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1024,
+        -208
+      ],
+      "id": "6e2b2d2a-86ad-4797-9477-5d272e0b1ce1",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": "qwen3:1.7b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [
+        1024,
+        -16
+      ],
+      "id": "0d48b075-b547-42f3-998e-b108f2adba2d",
+      "name": "Ollama Chat Model",
+      "credentials": {
+        "ollamaApi": {
+          "id": "iPQjreJG7MNRSYyv",
+          "name": "Ollama account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -32,
+        -208
+      ],
+      "id": "db51b914-1611-415b-a730-decd5e4b1789",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://127.0.0.1:31009/v1/spaces/bafyreib7tzhaakqtjoxf5s4.1q72ncpjq3gie/objects",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Anytype-Version",
+              "value": "2025-11-08"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "type_key",
+              "value": "ideia"
+            },
+            {
+              "name": "name",
+              "value": "={{ $json.name }}"
+            },
+            {
+              "name": "body",
+              "value": "={{ $json.body }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1552,
+        -208
+      ],
+      "id": "1d387902-5593-4257-a17b-62f4c46ab035",
+      "name": "Registra ideia",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "uE7tegdhMFiHhghx",
+          "name": "Bearer Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://127.0.0.1:31009/v1/spaces/bafyreib7tykavwcgzhdqdz6ut4kqtjoxf5s4.1q72ncpjq3gie/search",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Anytype-Version",
+              "value": "2025-11-08"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"query\": \"file\",\n  \"types\": [\"audio\"]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        176,
+        -208
+      ],
+      "id": "103b6bf9-d11a-46b6-b824-2eb0eb10b45c",
+      "name": "Lista áudios",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "uE7tegdhMFiHhghx",
+          "name": "Bearer Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "=http://127.0.0.1:31009/v1/spaces/bafyreib7tykavw5s4.1q72ncpjq3gie/files/{{ $json.id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Anytype-Version",
+              "value": "2025-11-08"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        416,
+        -208
+      ],
+      "id": "7da3a2a4-b096-4444-a7a0-9b0eb9482cca",
+      "name": "Baixa áudio",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "uE7tegdhMFiHhghx",
+          "name": "Bearer Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Acessa o array \"data\" que veio dentro do primeiro item do nó anterior\nconst filesArray = $json.data; \n\n// Transforma cada elemento do array em um item independente para o n8n\nreturn filesArray.map(file => {\n  return {\n    json: {\n      id: file.id,\n      name: file.name || 'audio_downloaded'\n      // Adicione outras propriedades aqui se precisar (ex: file.size)\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        288,
+        32
+      ],
+      "id": "fca78da7-faee-4354-93bf-64875e8e0f5d",
+      "name": "Code in JavaScript2"
+    },
+    {
+      "parameters": {
+        "method": "DELETE",
+        "url": "=http://127.0.0.1:31009/v1/spaces/bafyreib7tykavwcgt4kqtjoxf5s4.1q72ncpjq3gie/files/{{ $json.id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Anytype-Version",
+              "value": "2025-11-08"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        480,
+        32
+      ],
+      "id": "465c99b6-076d-44d4-a78b-6b67b7131ff9",
+      "name": "Remove áudio",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "uE7tegdhMFiHhghx",
+          "name": "Bearer Auth account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Registra ideia",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Lista áudios",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lista áudios": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Baixa áudio": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript2": {
+      "main": [
+        [
+          {
+            "node": "Baixa áudio",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Remove áudio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "ef3f3d37-e493-44bb-a587-61ce44d8b0d7",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "dda91f1921ff643283b4209145eb9998c17f284ffa5b77b855249d8a175a2d9d"
+  },
+  "nodeGroups": [],
+  "id": "h7NLC8DzgR3SXZ1I",
+  "tags": []
+}
