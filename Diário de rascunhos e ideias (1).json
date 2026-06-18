@@ -1,0 +1,411 @@
+{
+  "name": "Diário de rascunhos e ideias",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {
+          "download": true
+        }
+      },
+      "id": "dfc7bfbc-07a7-4721-b08c-f591bfb5bfc1",
+      "name": "Telegram Trigger",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1,
+      "position": [
+        -432,
+        272
+      ],
+      "webhookId": "fa335c7ebeec0",
+      "credentials": {
+        "telegramApi": {
+          "id": "VizmOa76znepZ1RR",
+          "name": "Telegram account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "fileId": "={{ $('Telegram Trigger').item.json.message.voice.file_id }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "36419f66-46de-4072-8d38-37dc4c841a43",
+      "name": "Get a file",
+      "webhookId": "b0ad-8223-26da884b",
+      "credentials": {
+        "telegramApi": {
+          "id": "VizmOa76znepZ1RR",
+          "name": "Telegram account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "=Arquivo registrado com sucesso!",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        576,
+        0
+      ],
+      "id": "d8bd16d7-6999-403b-870f-0940752c33f2",
+      "name": "Mensagem de áudio upload",
+      "webhookId": "b10c32--137f89e01a61",
+      "credentials": {
+        "telegramApi": {
+          "id": "VizmOa76znepZ1RR",
+          "name": "Telegram account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.message.voice.mime_type }}",
+                    "rightValue": "audio/ogg",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "a52d5621-4a6c-47d2-81a0-92cb71a3f6c1"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "É áudio"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "0500114d-82c5-4839-910a-2d2de9239fd1",
+                    "leftValue": "={{ $json.message.photo }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "array",
+                      "operation": "notEmpty",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "É imagem"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "f52e802b-8b65-4e8f-b79f-2f86ec8a5bbd",
+                    "leftValue": "={{ $json.message.text }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "string",
+                      "operation": "notEmpty",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "É texto"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -240,
+        256
+      ],
+      "id": "97f3e0d2-018e-493b-bd54-1d1340135cfa",
+      "name": "Switch1"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-tesseractjs.tesseractNode",
+      "typeVersion": 1,
+      "position": [
+        96,
+        272
+      ],
+      "id": "77193701-bfb2-4aff-80ee-57ce1d525600",
+      "name": "Tesseract"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://anytype-cli:31012/v1/spaces/bafyreib7t2ncpjq3gie/objects",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Anytype-Version",
+              "value": "\"2025-11-08\""
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "type_key",
+              "value": "ideia"
+            },
+            {
+              "name": "name",
+              "value": "={{ $json.text.slice(0, 20) }}"
+            },
+            {
+              "name": "body",
+              "value": "={{ $json.text }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        320,
+        432
+      ],
+      "id": "216d011e-e07f-4db2-ab04-e7ca000058de",
+      "name": "Registra ideia"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://anytype-cli:31012/v1/spaces/bafypdfxxf5q72ncpjq3gie/files",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Anytype-Version",
+              "value": "\"2025-11-08\""
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "file",
+              "inputDataFieldName": "data"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        288,
+        0
+      ],
+      "id": "88d9f937-3671-48d1-9c6c-956777a74488",
+      "name": "Upload do arquivo",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "uE7tegdhMFiHhghx",
+          "name": "Bearer Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return {\n  text: $input.first().json.message.text\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -32,
+        432
+      ],
+      "id": "9ff363f0-1334-40a3-9f11-523e30db1cec",
+      "name": "Code in JavaScript3"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "=Texto registrado com sucesso!",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        592,
+        432
+      ],
+      "id": "43e5160d-e8cd-4c92-8ae6-91b512a74ef5",
+      "name": "Mensagem de sucesso",
+      "webhookId": "b104fa7f89e01a61",
+      "credentials": {
+        "telegramApi": {
+          "id": "VizmOa76znepZ1RR",
+          "name": "Telegram account 2"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Switch1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get a file": {
+      "main": [
+        [
+          {
+            "node": "Upload do arquivo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch1": {
+      "main": [
+        [
+          {
+            "node": "Get a file",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Upload do arquivo",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Tesseract",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Code in JavaScript3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tesseract": {
+      "main": [
+        [
+          {
+            "node": "Registra ideia",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload do arquivo": {
+      "main": [
+        [
+          {
+            "node": "Mensagem de áudio upload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Registra ideia": {
+      "main": [
+        [
+          {
+            "node": "Mensagem de sucesso",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript3": {
+      "main": [
+        [
+          {
+            "node": "Registra ideia",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "54a4baba-edad-4602-96f1-d422f2edb5c7",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "dda91f1921ff643283b4209145eb9998c17f284ffa5b77b855249d8a175a2d9d"
+  },
+  "nodeGroups": [],
+  "id": "UvgXmzSUaxKgSv9D",
+  "tags": []
+}
